@@ -120,7 +120,7 @@ def main():
     article_len = df["article"].apply(len)
     df = df[article_len > article_len.quantile(0.25)]
     df.drop_duplicates(subset=["article"], inplace=True)
-    
+
     filename = f"CSVs/news_articles_{datetime.now().strftime('%Y-%m-%d')}.csv"
     df.to_csv(filename, index=False)
     print(f"Saved {len(parsed_articles)} articles to {filename}")

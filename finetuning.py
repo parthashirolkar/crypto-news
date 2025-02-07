@@ -10,7 +10,9 @@ from templates.prompt_templates import prompt_style, question
 warnings.filterwarnings("ignore")
 
 # Parse command-line arguments
-parser = argparse.ArgumentParser(description="Train a language model on a given CSV file")
+parser = argparse.ArgumentParser(
+    description="Train a language model on a given CSV file"
+)
 parser.add_argument("csv_path", type=str, help="Path to the CSV file")
 args = parser.parse_args()
 
@@ -19,7 +21,7 @@ df = pd.read_csv(args.csv_path, parse_dates=["publish_date"])
 df["publish_date"] = df["publish_date"].dt.strftime("%Y-%m-%d")
 df.sort_values(by="publish_date", inplace=True, ascending=True)
 df.drop_duplicates(subset=["article"], inplace=True)
-df['response'] = df['response'].str.replace("<｜end▁of▁sentence｜>", "")
+df["response"] = df["response"].str.replace("<｜end▁of▁sentence｜>", "")
 
 # Load model and tokenizer
 max_seq_length = 2048
@@ -36,8 +38,13 @@ model = FastLanguageModel.get_peft_model(
     model,
     r=8,
     target_modules=[
-        "q_proj", "k_proj", "v_proj", "o_proj",
-        "gate_proj", "up_proj", "down_proj"
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj",
     ],
     lora_alpha=16,
     lora_dropout=0,
@@ -48,6 +55,7 @@ model = FastLanguageModel.get_peft_model(
     loftq_config=None,
 )
 
+
 # Format prompt
 def format_prompt(examples):
     publish_date = examples["publish_date"]
@@ -56,8 +64,12 @@ def format_prompt(examples):
     response = examples["response"]
     texts = []
     for date, article in zip(publish_date, news):
-        texts.append(prompt_style.format(date, title, article, question, response, "") + EOS_TOKEN)
+        texts.append(
+            prompt_style.format(date, title, article, question, response, "")
+            + EOS_TOKEN
+        )
     return {"text": texts}
+
 
 # Prepare dataset
 training_data = Dataset.from_pandas(df)
