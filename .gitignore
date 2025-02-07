@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.ipynb
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.env/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+.ruff_cache/
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# Local development settings
+.env
+.env.local
+.env.*.local
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.csv
+*.json
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+CSVs/
+wallstreet*/
+notebooks/
+qwentune-metrics/
