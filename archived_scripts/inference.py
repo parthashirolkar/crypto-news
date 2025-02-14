@@ -1,7 +1,7 @@
 from pprint import pprint
-from get_bitoin_prices import get_data
-import re
-import json
+from utils.get_bitoin_prices import get_data
+
+from transformers import TextStreamer
 from unsloth import FastLanguageModel
 from templates.prompt_templates import prompt_style, question
 
@@ -9,14 +9,20 @@ max_seq_length = 2048
 dtype = None
 load_in_4bit = True
 
-bitoin_data = get_data()
 
 model, tokenizer = FastLanguageModel.from_pretrained(
-    # model_name="qwentune-metrics/checkpoint-1030",
-    model_name="unsloth/Qwen2.5-7B",
+    # model_name="unsloth/DeepSeek-R1-Distill-Llama-8B",
+    model_name="finetuned/dalal-street-bro",
     max_seq_length=max_seq_length,
     dtype=dtype,
     load_in_4bit=load_in_4bit,
+)
+
+streamer = TextStreamer(
+    tokenizer,
+    skip_prompt=True,
+    skip_special_tokens=True,
+    clean_up_tokenization_spaces=True,
 )
 
 publish_date = "2025-01-29"
@@ -45,45 +51,51 @@ mail logo
 Subscribe to receive the day's headlines from The Indian Express straight in your inbox
 Some of Trump’s key picks for his administration, including Paul Atkins, to lead the Securities and Exchange Commission (SEC), and is widely considered a cryptocurrency advocate, also signalled a largely pro-crypto regulatory environment for the currency under the new administration."""
 
+
+bitoin_data = get_data(end_date=publish_date)
 news = news.replace("\n", " ")
 news = news.replace("’", "'")
 
 
-FastLanguageModel.for_inference(model)  # Optimizes the model for inference
+FastLanguageModel.for_inference(model).to("cuda")  # Optimizes the model for inference
 inputs = tokenizer(
     [prompt_style.format(publish_date, title, news, bitoin_data, question, "")],
     return_tensors="pt",
 ).to("cuda")
 
-outputs = model.generate(
+_ = model.generate(
     input_ids=inputs.input_ids,
+    streamer=streamer,
     attention_mask=inputs.attention_mask,
-    max_new_tokens=1000,
+    max_new_tokens=1024,
     use_cache=True,
+    repetition_penalty=1.1,
 )
-response = tokenizer.batch_decode(outputs, clean_up_tokenization_spaces=True)[0]
+
+# response = tokenizer.batch_decode(outputs, clean_up_tokenization_spaces=True)[0]
 
 # Extract only the response content
-if "### Response:" in response:
-    response = response.split("### Response:")[1].strip()
+# if "### Response:" in response:
+#     response = response.split("### Response:")[1].strip()
 
-json_match = re.search(r"\{.*\}", response, re.DOTALL)
 
-if json_match:
-    json_str = json_match.group(0)
-    json_str = re.sub(r"\s+", " ", json_str)
+# json_match = re.search(r"\{.*\}", response, re.DOTALL)
 
-    try:
-        data_dict = json.loads(json_str)
-    except json.JSONDecodeError as e:
-        print("JSON decoding failed:", e)
-else:
-    print("No JSON found in the text.")
+# if json_match:
+#     json_str = json_match.group(0)
+#     json_str = re.sub(r"\s+", " ", json_str)
 
-# Print with section headers for clarity
-print("\n" + "=" * 80)
-print("📢 **Generated Response** 📢\n")
+#     try:
+#         data_dict = json.loads(json_str)
+#     except json.JSONDecodeError as e:
+#         print("JSON decoding failed:", e)
+# else:
+#     print("No JSON found in the text.")
 
-pprint(data_dict, indent=4)
+# # Print with section headers for clarity
+# print("\n" + "=" * 80)
+# print("📢 **Generated Response** 📢\n")
+# print(response)
+# # pprint(data_dict, indent=4, sort_dicts=False)
 
-print("\n" + "=" * 80)
+# print("\n" + "=" * 80)

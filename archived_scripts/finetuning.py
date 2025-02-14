@@ -1,6 +1,8 @@
-import pandas as pd
 import argparse
 import warnings
+from utils.get_bitoin_prices import get_data
+import pandas as pd
+
 from unsloth import FastLanguageModel, is_bfloat16_supported
 from trl import SFTTrainer
 from transformers import TrainingArguments
@@ -19,14 +21,15 @@ args = parser.parse_args()
 # Load and preprocess data
 df = pd.read_csv(args.csv_path, parse_dates=["publish_date"])
 df["publish_date"] = df["publish_date"].dt.strftime("%Y-%m-%d")
+df["article"] = df["article"].str.replace("\\", "")
+
 df.sort_values(by="publish_date", inplace=True, ascending=True)
 df.drop_duplicates(subset=["article"], inplace=True)
-df["response"] = df["response"].str.replace("<｜end▁of▁sentence｜>", "")
 
 # Load model and tokenizer
 max_seq_length = 2048
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="unsloth/Qwen2.5-7B",
+    model_name="unsloth/Qwen2.5-3B-Instruct-bnb-4bit",
     max_seq_length=max_seq_length,
     dtype=None,
     load_in_4bit=True,
@@ -36,7 +39,7 @@ EOS_TOKEN = tokenizer.eos_token
 
 model = FastLanguageModel.get_peft_model(
     model,
-    r=8,
+    r=16,
     target_modules=[
         "q_proj",
         "k_proj",
@@ -49,7 +52,7 @@ model = FastLanguageModel.get_peft_model(
     lora_alpha=16,
     lora_dropout=0,
     bias="none",
-    use_gradient_checkpointing=True,  # True or "unsloth" for very long context
+    use_gradient_checkpointing=True,
     random_state=42,
     use_rslora=False,
     loftq_config=None,
@@ -59,13 +62,16 @@ model = FastLanguageModel.get_peft_model(
 # Format prompt
 def format_prompt(examples):
     publish_date = examples["publish_date"]
+    seven_day_data = get_data(publish_date)
     news = examples["article"]
     title = examples["title"]
     response = examples["response"]
     texts = []
     for date, article in zip(publish_date, news):
         texts.append(
-            prompt_style.format(date, title, article, question, response, "")
+            prompt_style.format(
+                date, title, article, seven_day_data, question, response, ""
+            )
             + EOS_TOKEN
         )
     return {"text": texts}
@@ -73,7 +79,7 @@ def format_prompt(examples):
 
 # Prepare dataset
 training_data = Dataset.from_pandas(df)
-training_data = training_data.map(format_prompt, batched=True)
+training_data = training_data.map(format_prompt, batched=True, batch_size=4)
 
 # Training setup
 trainer = SFTTrainer(
@@ -85,21 +91,21 @@ trainer = SFTTrainer(
     dataset_num_proc=2,
     packing=True,
     args=TrainingArguments(
-        learning_rate=3e-4,
+        learning_rate=2e-4,
         save_strategy="steps",
         save_steps=10,
         save_total_limit=2,
         lr_scheduler_type="linear",
         per_device_train_batch_size=2,
         gradient_accumulation_steps=1,
-        num_train_epochs=2,
+        num_train_epochs=5,
         fp16=not is_bfloat16_supported(),
         bf16=is_bfloat16_supported(),
         logging_steps=1,
         optim="adamw_8bit",
         weight_decay=0.01,
         warmup_steps=10,
-        output_dir="qwentune-metrics",
+        output_dir="dalal-street-bro-metrics",
         seed=42,
     ),
 )
@@ -108,5 +114,5 @@ trainer = SFTTrainer(
 trainer.train()
 
 # Save model and tokenizer
-model.save_pretrained("deepseek/qwentune")
-tokenizer.save_pretrained("deepseek/qwentune")
+model.save_pretrained("finetuned/dalal-street-bro")
+tokenizer.save_pretrained("finetuned/dalal-street-bro")

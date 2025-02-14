@@ -19,10 +19,10 @@ Additionally, you have also been provided with tabular data of opening and closi
 ### News Article:
 {}
 
-### Question:
+### Data:
 {}
 
-### Data:
+### Question:
 {}
 
 ### Response:
@@ -31,4 +31,4 @@ Additionally, you have also been provided with tabular data of opening and closi
 question = """Based on the news articles and past 7 day price of bitcoin you have analysed so far,
 give financial advice to a trading novice interested in investing in Bitcoin. Also predict the general 
 market sentiement for the next week and explain why you think so.
-Format your response into JSON. The keys will be thought process, advice and market sentiment."""
+Output the response as valid JSON without escaped characters. The keys will be thought process, advice and market sentiment."""
