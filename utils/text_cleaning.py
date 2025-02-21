@@ -11,9 +11,7 @@ def normalize_text(text):
     """Perform text normalization (lowercase, whitespace cleanup, punctuation standardization)."""
     text = text.lower()
     text = re.sub(r"\s+", " ", text).strip()
-    text = (
-        text.replace("’", "'").replace("“", '"').replace("”", '"')
-    )
+    text = text.replace("’", "'").replace("“", '"').replace("”", '"')
     return text
 
 

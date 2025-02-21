@@ -82,9 +82,9 @@ def format_context(article_chunks, bitcoin_data=None):
         publish_date = first_chunk["publish_date"]
         if isinstance(publish_date, str):
             # Convert to datetime object if necessary
-            publish_date = datetime.strptime(publish_date, "%Y-%m-%d %H:%M:%S").strftime(
-                "%Y-%m-%dT%H:%M:%S"
-            )
+            publish_date = datetime.strptime(
+                publish_date, "%Y-%m-%d %H:%M:%S"
+            ).strftime("%Y-%m-%dT%H:%M:%S")
 
         bitcoin_data = get_data(publish_date)
 

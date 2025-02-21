@@ -17,7 +17,7 @@ a temporal dimension of what event is occuring when. This will help you understa
 {}
 
 ### Response:
-{}"""   
+{}"""
 
 question = """Based on the news articles you read,
 comment about how this article can influence the crypto market."""
