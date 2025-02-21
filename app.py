@@ -76,7 +76,7 @@ def format_context(article_chunks, bitcoin_data=None):
             context += chunk["chunk"] + " "
 
         context += "\n\n"
-        dates.append(first_chunk["title"])
+        
 
         # Ensure the date is in the correct format
         publish_date = first_chunk["publish_date"]
@@ -85,8 +85,9 @@ def format_context(article_chunks, bitcoin_data=None):
             publish_date = datetime.strptime(
                 publish_date, "%Y-%m-%d %H:%M:%S"
             ).strftime("%Y-%m-%dT%H:%M:%S")
+            dates.append(publish_date)
 
-        bitcoin_data = get_data(publish_date)
+    bitcoin_data = get_data(max(dates))
 
     # Add Bitcoin price data if available
     if bitcoin_data is not None:
